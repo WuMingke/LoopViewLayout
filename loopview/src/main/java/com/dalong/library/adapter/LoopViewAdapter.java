@@ -35,7 +35,7 @@ public abstract class LoopViewAdapter<T> implements ILoopViewAdapter {
     @Override
     public T getItem(int position) {
         if (mDatas == null) {
-            throw new RuntimeException(" data cannot be  null");
+//            throw new RuntimeException(" data cannot be  null");
         }
         return mDatas.get(position);
     }

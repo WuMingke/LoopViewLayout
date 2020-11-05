@@ -81,6 +81,8 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
 
     private float limitX;//滑动倒最低30
 
+    private LoopViewAdapter mAdapter;
+
     public enum AutoScrollDirection {
         LEFT, RIGHT
     }
@@ -189,7 +191,6 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
      */
     public void updateLoopViews() {
         int count = getChildCount();
-        Map<Integer, Float> map = new HashMap<>();
         for (int i = 0; i < count; i++) {
             View view = getChildAt(i);
             float radians = angle + 180 - (float) (i * 360f / size);
@@ -199,7 +200,6 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
             view.setScaleX(Math.max(scale0, 0.4f));//对view进行缩放
             view.setScaleY(Math.max(scale0, 0.4f));//对view进行缩放
             view.setAlpha(Math.max(scale0, 0.4f));
-            map.put((Integer) view.getTag(), scale0);
 
             float rotationX_y = (float) Math.sin(Math.toRadians(loopRotationX * Math.cos(Math.toRadians(radians)))) * r;
             float rotationZ_y = -(float) Math.sin(Math.toRadians(-loopRotationZ)) * x0;
@@ -747,8 +747,6 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
     }
 
 
-    LoopViewAdapter mAdapter;
-
     @Override
     public LoopViewAdapter getAdapter() {
         return mAdapter;
@@ -757,10 +755,12 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
     @Override
     public void setAdapter(LoopViewAdapter adapter) {
         if (adapter == null) {
-            throw new RuntimeException("adapter must not be null");
+//            throw new RuntimeException("adapter must not be null");
+            return;
         }
         if (mAdapter != null) {
-            throw new RuntimeException("you have already set an Adapter");
+//            throw new RuntimeException("you have already set an Adapter");
+            return;
         }
         this.mAdapter = adapter;
         mAdapter.setOnLoopViewChangeListener(this);
