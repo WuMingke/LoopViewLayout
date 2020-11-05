@@ -37,11 +37,7 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
 
     private int mOrientation = horizontal;//方向
 
-    private Context mContext;//上下文
-
     private ValueAnimator restAnimator = null;//回位动画
-
-    private ValueAnimator rAnimation = null;//半径动画
 
     private ValueAnimator zAnimation = null;
 
@@ -82,6 +78,7 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
     private float limitX;//滑动倒最低30
 
     private LoopViewAdapter mAdapter;
+    private DecelerateInterpolator decelerateInterpolator;
 
     public enum AutoScrollDirection {
         LEFT, RIGHT
@@ -115,7 +112,6 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
      */
     public LoopViewLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        this.mContext = context;
         setGravity(Gravity.CENTER);
         ViewConfiguration mVelocityTracker = new ViewConfiguration();
         limitX = mVelocityTracker.getScaledTouchSlop();
@@ -210,58 +206,6 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
         postInvalidate();
     }
 
-
-    /**
-     * 排序
-     */
-    private <T> void sortList(Map<Integer, Float> map) {
-        List<Map.Entry<Integer, Float>> list = new ArrayList<Map.Entry<Integer, Float>>(map.entrySet());
-        //然后通过比较器来实现排序
-        Collections.sort(list, new Comparator<Map.Entry<Integer, Float>>() {
-            @Override
-            public int compare(Map.Entry<Integer, Float> o1, Map.Entry<Integer, Float> o2) {
-                return o2.getValue().compareTo(o1.getValue());
-            }
-        });
-        for (Map.Entry<Integer, Float> mapping : list) {
-            getChildAt(mapping.getKey()).bringToFront();
-        }
-
-    }
-
-
-    public void RAnimation() {
-        RAnimation(1f, r);
-    }
-
-    public void RAnimation(boolean fromZeroToLoopR) {
-        if (fromZeroToLoopR) {
-            RAnimation(1f, LoopR);
-        } else {
-            RAnimation(LoopR, 1f);
-        }
-    }
-
-    public void RAnimation(float from, float to) {
-        if (rAnimation != null) {
-            if (rAnimation.isRunning()) {
-                rAnimation.cancel();
-            }
-        }
-        rAnimation = ValueAnimator.ofFloat(from, to);
-        rAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                r = (Float) valueAnimator.getAnimatedValue();
-                updateLoopViews();
-            }
-        });
-        rAnimation.setInterpolator(new DecelerateInterpolator());
-        rAnimation.setDuration(2000);
-        rAnimation.start();
-    }
-
-
     /**
      * 复位
      */
@@ -303,14 +247,19 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
         if (angle == finall) {//如果相同说明不需要旋转
             return;
         }
-        restAnimator = ValueAnimator.ofFloat(angle, finall);
-        restAnimator.setInterpolator(new DecelerateInterpolator());//设置旋转减速插值器
+        if (restAnimator == null) {
+            restAnimator = ValueAnimator.ofFloat(angle, finall);
+        }
+        if (decelerateInterpolator == null){
+            decelerateInterpolator = new DecelerateInterpolator();
+        }
+        restAnimator.setInterpolator(decelerateInterpolator);//设置旋转减速插值器
         restAnimator.setDuration(300);
 
         restAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                if (touching == false) {
+                if (!touching) {
                     angle = (Float) animation.getAnimatedValue();
                     updateLoopViews();
                 }
@@ -323,7 +272,7 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (touching == false) {
+                if (!touching) {
                     selectItem = calculateItem();
                     if (selectItem < 0) {
                         selectItem = size + selectItem;
@@ -724,10 +673,6 @@ public class LoopViewLayout extends RelativeLayout implements ILoopView<LoopView
 
     public ValueAnimator getRestAnimator() {
         return restAnimator;
-    }
-
-    public ValueAnimator getrAnimation() {
-        return rAnimation;
     }
 
     public void setzAnimation(ValueAnimator zAnimation) {
